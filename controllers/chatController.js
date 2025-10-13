@@ -40,3 +40,14 @@ export const getChatMessages = async (req, res) => {
     res.status(400).json({ status: 'error', message: err.message });
   }
 };
+
+export const getOrgChats = async (req, res) => {
+  try {
+    const { organization_id } = req.params;
+
+    const chats = await Chat.findAll({ where: { organization_id }, order: [['id', 'ASC']] });
+    res.json({ status: 'success', chats });
+  } catch (err) {
+    res.status(400).json({ status: 'error', message: err.message });
+  }
+};

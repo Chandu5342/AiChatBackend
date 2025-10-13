@@ -7,6 +7,7 @@ import userRoutes from './routes/userRoutes.js';
 import orgRoutes from './routes/orgRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
+import googleAuthRoutes from './routes/googleAuthRoutes.js';
 import Notification from './models/Notification.js';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -27,7 +28,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/orgs', orgRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
-
+app.use('/api/google-login', googleAuthRoutes);
 // Health check
 app.get('/health', (req, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

@@ -31,3 +31,17 @@ export const getUserOrgs = async (req, res) => {
     res.status(400).json({ status: 'error', message: err.message });
   }
 };
+export const setActiveOrg = async (req, res) => {
+  try {
+    const { user_id, organization_id } = req.body;
+    const user = await User.findByPk(user_id);
+    if (!user) return res.status(404).json({ status: 'error', message: 'User not found' });
+
+    user.active_org_id = organization_id;
+    await user.save();
+
+    res.json({ status: 'success', message: 'Active organization updated' });
+  } catch (err) {
+    res.status(400).json({ status: 'error', message: err.message });
+  }
+};
