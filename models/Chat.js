@@ -1,4 +1,3 @@
-// models/Chat.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
@@ -9,8 +8,5 @@ const Chat = sequelize.define('Chat', {
   title: { type: DataTypes.STRING, defaultValue: 'Untitled Chat' }
 }, { tableName: 'chats', timestamps: false });
 
-Chat.createChat = async ({ organization_id, created_by, title }) => {
-  return Chat.create({ organization_id, created_by, title });
-};
-
+Chat.createChat = async ({ organization_id, created_by, title }) => Chat.create({ organization_id, created_by, title });
 export default Chat;

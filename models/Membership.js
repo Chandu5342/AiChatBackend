@@ -1,4 +1,3 @@
-// models/Membership.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
@@ -9,8 +8,7 @@ const Membership = sequelize.define('Membership', {
   role: { type: DataTypes.STRING, defaultValue: 'member' }
 }, { tableName: 'memberships', timestamps: false });
 
-Membership.addMember = async ({ user_id, organization_id, role }) => {
-  return Membership.create({ user_id, organization_id, role });
-};
+Membership.addMember = async ({ user_id, organization_id, role }) => Membership.create({ user_id, organization_id, role });
+Membership.getUserMemberships = async (user_id) => Membership.findAll({ where: { user_id } });
 
 export default Membership;

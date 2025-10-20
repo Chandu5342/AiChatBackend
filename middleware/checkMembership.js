@@ -1,15 +1,17 @@
 import Membership from '../models/Membership.js';
 
-// Checks if user belongs to org
 export const isOrgMember = async (req, res, next) => {
+   // console.log("call bef")
   try {
-    const user_id = req.body.user_id || req.params.user_id;
-    const org_id = req.body.organization_id || req.params.organization_id;
-
-    if (!user_id || !org_id) throw new Error('user_id and organization_id required');
-
+    const user_id = req.user.id; // get user from token (protect middleware)
+    console.log(req.params.organization_id)
+    const org_id =  req.params.organization_id || req.body.organization_id ;
+     
+    if (!org_id) throw new Error('organization_id required');
+  
     const membership = await Membership.findOne({ where: { user_id, organization_id: org_id } });
-    if (!membership) return res.status(403).json({ status: 'error', message: 'Access denied: not a member of this org' });
+    if (!membership) return res.status(403).json({ status: 'error', message: 'Access denied' });
+      console.log("call cont",org_id)
 
     next();
   } catch (err) {

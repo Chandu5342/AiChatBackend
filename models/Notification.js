@@ -1,4 +1,3 @@
-// models/Notification.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
@@ -10,8 +9,7 @@ const Notification = sequelize.define('Notification', {
   is_read: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { tableName: 'notifications', timestamps: false });
 
-Notification.createNotification = async ({ user_id, organization_id, message }) => {
-  return Notification.create({ user_id, organization_id, message });
-};
+Notification.createNotification = async ({ user_id, organization_id, message }) =>
+  Notification.create({ user_id, organization_id, message });
 
 export default Notification;
