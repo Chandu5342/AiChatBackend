@@ -28,6 +28,7 @@ export const getUserOrgs = async (req, res) => {
 export const setActiveOrg = async (req, res) => {
   try {
     const { user_id, organization_id } = req.body;
+    console.log(user_id,organization_id)
     const user = await User.findByPk(user_id);
     if (!user) return res.status(404).json({ status: 'error', message: 'User not found' });
     user.active_org_id = organization_id;

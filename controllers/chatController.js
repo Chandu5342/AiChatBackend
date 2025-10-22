@@ -2,31 +2,24 @@ import dotenv from "dotenv";
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
+import { io, onlineUsers } from "../server.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+
 dotenv.config();
 
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+
+/* ----------------------------- CREATE CHAT ----------------------------- */
 export const createChat = async (req, res) => {
   try {
     const { organization_id, created_by, title } = req.body;
-
-    if (!organization_id) {
-      return res.status(400).json({ status: "error", message: "organization_id required" });
-    }
-
-    if (!created_by) {
-      return res.status(400).json({ status: "error", message: "created_by required" });
-    }
+    if (!organization_id || !created_by)
+      return res.status(400).json({ status: "error", message: "organization_id and created_by required" });
 
     const chatTitle = title || "New Chat";
+    const chat = await Chat.createChat({ organization_id, created_by, title: chatTitle });
 
-    // Create new chat
-    const chat = await Chat.createChat({
-      organization_id,
-      created_by,
-      title: chatTitle,
-    });
-
-    // Return full chat object
     res.status(201).json({
       status: "success",
       chat: {
@@ -39,63 +32,72 @@ export const createChat = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error creating chat:", err);
+    console.error("❌ Error creating chat:", err);
     res.status(400).json({ status: "error", message: err.message });
   }
 };
 
+/* ----------------------------- ADD MESSAGE ----------------------------- */
 export const addMessage = async (req, res) => {
   try {
     const { chat_id, sender_id, role, content } = req.body;
-    if (role === "user") await User.deductCredits(sender_id, 1);
+
+    // Deduct credits if user message
+    if (role === "user") {
+      const newCredits = await User.deductCredits(sender_id, 1);
+
+      // Emit updated credits
+      const socketId = onlineUsers.get(sender_id);
+      if (socketId) {
+        io.to(socketId).emit("credit-update", newCredits);
+        console.log(`💸 Emitted credit-update to ${sender_id}: ${newCredits}`);
+      }
+    }
+
     const message = await Message.addMessage({ chat_id, sender_id, role, content });
     res.status(201).json({ status: "success", message });
-  } catch (err) { res.status(400).json({ status: "error", message: err.message }); }
+  } catch (err) {
+    console.error("❌ Error adding message:", err);
+    res.status(400).json({ status: "error", message: err.message });
+  }
 };
 
+/* ----------------------------- GET CHAT MESSAGES ----------------------------- */
 export const getChatMessages = async (req, res) => {
   try {
     const { chat_id } = req.params;
     const messages = await Message.findAll({ where: { chat_id }, order: [["id", "ASC"]] });
     res.json({ status: "success", messages });
-  } catch (err) { res.status(400).json({ status: "error", message: err.message }); }
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
 };
 
+/* ----------------------------- GET ORG CHATS ----------------------------- */
 export const getOrgChats = async (req, res) => {
   try {
     const { organization_id } = req.params;
     const chats = await Chat.findAll({ where: { organization_id }, order: [["id", "ASC"]] });
     res.json({ status: "success", chats });
-  } catch (err) { res.status(400).json({ status: "error", message: err.message }); }
+  } catch (err) {
+    res.status(400).json({ status: "error", message: err.message });
+  }
 };
 
-
-
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-
-
-
+/* ----------------------------- SEND MESSAGE TO GEMINI ----------------------------- */
 export const sendMessageToLLM = async (req, res) => {
-  
   try {
     const { chat_id, sender_id, content } = req.body;
-  console.log(chat_id)
-    if (!chat_id) {
-      return res.status(400).json({ status: "error", message: "chat_id is required" });
-    }
-console.log("hello")
-    if (!sender_id) {
-      return res.status(400).json({ status: "error", message: "sender_id is required" });
-    }
+    if (!chat_id || !sender_id || !content?.trim())
+      return res.status(400).json({ status: "error", message: "Missing required fields" });
 
-    if (!content?.trim()) {
-      return res.status(400).json({ status: "error", message: "Message content required" });
+    // Deduct credits and emit update
+    const newCredits = await User.deductCredits(sender_id, 1);
+    const socketId = onlineUsers.get(sender_id);
+    if (socketId) {
+      io.to(socketId).emit("credit-update", newCredits);
+      console.log(`💸 Emitted credit-update to ${sender_id}: ${newCredits}`);
     }
-
-    // Deduct user credits
-    await User.deductCredits(sender_id, 1);
 
     // Save user message
     const userMessage = await Message.addMessage({
@@ -106,39 +108,31 @@ console.log("hello")
     });
 
     // Fetch chat history
-    const messagesHistory = await Message.findAll({
-      where: { chat_id },
-      order: [["id", "ASC"]],
-    });
-
-    // Prepare contents for Gemini API
-    const contents = messagesHistory.map(m => ({
-      role: m.role === "user" ? "user" : "model", // map assistant -> model
+    const messagesHistory = await Message.findAll({ where: { chat_id }, order: [["id", "ASC"]] });
+    const contents = messagesHistory.map((m) => ({
+      role: m.role === "user" ? "user" : "model",
       parts: [{ text: m.content || " " }],
     }));
-
-    // Include the new message
     contents.push({ role: "user", parts: [{ text: content }] });
 
     // Call Gemini API
     const result = await model.generateContent({ contents });
     const assistantReply = result.response.text();
 
-    // Save assistant message
+    // Save assistant reply
     const assistantMessage = await Message.addMessage({
       chat_id,
       sender_id: null,
-      role: "assistant", // still use "assistant" in DB for frontend rendering
+      role: "assistant",
       content: assistantReply,
     });
 
-    // Return both messages
     res.json({ status: "success", userMessage, assistantMessage });
   } catch (err) {
-    console.error("AI generation failed:", err);
+    console.error("❌ AI generation failed:", err);
     res.status(500).json({
       status: "error",
-      message: "AI generation failed. Please try again later.",
+      message: "AI generation failed",
       details: err.message,
     });
   }
