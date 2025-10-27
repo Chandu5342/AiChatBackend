@@ -133,7 +133,7 @@ GEMINI_API_KEY=kkkj
 
 ## Live Backend
   Diployed on render platform
-*  [Chat Application API](https://chat-application-backend.onrender.com)
+*  [Chat Application API](https://aichatbackend-ulkv.onrender.com)
 ---
 
 ## Test Accounts
@@ -147,7 +147,7 @@ GEMINI_API_KEY=kkkj
 ## Run Locally
 
 ```bash
-git clone https://github.com/Chandu5342/ChatApplicationBackend.git
+git clone https://github.com/Chandu5342/AiChatBackend.git
 cd ChatApplicationBackend
 npm install
 npm run dev
