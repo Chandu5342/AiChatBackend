@@ -10,20 +10,18 @@ export const signup = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // 1️⃣ Create user
+
     const user = await User.createUser({ username, email, password });
 
-    // 2️⃣ Create default organization
     const org = await Organization.createOrg({ name: `${username}'s Org`, created_by: user.id });
 
-    // 3️⃣ Add membership
+
     await Membership.addMember({ user_id: user.id, organization_id: org.id, role: 'admin' });
 
-    // 4️⃣ Set active_org_id in user
     user.active_org_id = org.id;
     await user.save();
 
-    // 5️⃣ Generate token
+
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });

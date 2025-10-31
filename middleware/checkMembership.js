@@ -11,8 +11,8 @@ export const isOrgMember = async (req, res, next) => {
   
     const membership = await Membership.findOne({ where: { user_id, organization_id: org_id } });
     if (!membership) return res.status(403).json({ status: 'error', message: 'Access denied' });
-      console.log("call cont",org_id)
-
+      
+   
     next();
   } catch (err) {
     res.status(400).json({ status: 'error', message: err.message });
