@@ -5,6 +5,7 @@ dotenv.config();
 
 // Initialize client for v1 API
 const genAI = new GoogleGenerativeAI({
+  
   apiKey: process.env.GEMINI_API_KEY,
   // force use v1 endpoint
   apiEndpoint: "https://generativelanguage.googleapis.com/v1"

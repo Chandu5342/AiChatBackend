@@ -8,11 +8,14 @@ dotenv.config();
 
 export const signup = async (req, res) => {
   try {
+   
     const { username, email, password } = req.body;
+ 
 
-
+  
     const user = await User.createUser({ username, email, password });
-
+    console.log("helo",username);
+  console.log('User signed up:', user.id, user.username, user.email);
     const org = await Organization.createOrg({ name: `${username}'s Org`, created_by: user.id });
 
 
@@ -25,10 +28,11 @@ export const signup = async (req, res) => {
     const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
-
+ 
     // 6️⃣ Return user + active org
     res.status(201).json({ status: 'success', user, activeOrg: org, token });
   } catch (err) {
+    console.error('Signup error:', err);
     res.status(400).json({ status: 'error', message: err.message });
   }
 };
@@ -52,11 +56,13 @@ export const login = async (req, res) => {
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
+    console.log("err.message")
     const user = await User.findByPk(id);
     if (!user) return res.status(404).json({ status: 'error', message: 'User not found' });
 
     res.json({ status: 'success', user });
   } catch (err) {
+    console.log(err.message)
     res.status(400).json({ status: 'error', message: err.message });
   }
 };
