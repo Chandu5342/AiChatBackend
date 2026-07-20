@@ -71,14 +71,13 @@ backend/
 * dotenv for database configuration
 * Google OAuth Login
 
-## DB configuration (use phpmyadmin)
+## DB configuration (use Supabse)
 PORT=4000
 NODE_ENV=development
 JWT_SECRET=supersecret_jwt_key
 JWT_EXPIRES_IN=7d
 DB_URL=postgresql://postgres.bdnodwywqgrntxklnhbx:.........@@aws-1-us-east-2.pooler.supabase.com:6543/postgres?pgbouncer=true
-GOOGLE_CLIENT_ID=887989750531-v7t9k9unkevd9q6lk9ng18o00i2uhtoa.apps.googleusercontent.com
-GEMINI_API_KEY=kkkj
+
 
 
 
